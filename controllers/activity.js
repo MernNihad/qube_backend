@@ -99,7 +99,7 @@ export const getActivity = async (req, res, next) => {
                         duedate: activity.duedate,
                         mark: activity.mark,
                         trainersRef: activity.trainersRef,
-                        trainersName: trainer.name, // Get trainer name
+                        trainersName: trainer?.name, // Get trainer name
                         courseRef: courses,
                         createdAt: activity.createdAt,
                         updatedAt: activity.updatedAt,
