@@ -1,5 +1,5 @@
 import express from "express";
-import { createAttendance, getAttendances, getAttendancesCount } from "../controllers/attendance.js";
+import { createAttendance, getAttendances, getAttendancesCount, getAttendancesStudent } from "../controllers/attendance.js";
 import { verifyAdmin, verifyAdminOrStudentorTrainerRole } from "../utils/verifyToken.js";
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.post("/", verifyAdminOrStudentorTrainerRole, createAttendance)
 // GET ALL
 
 router.get("/", verifyAdminOrStudentorTrainerRole,getAttendances)
+router.get("/student", verifyAdminOrStudentorTrainerRole,getAttendancesStudent)
 router.get("/counts", verifyAdminOrStudentorTrainerRole,getAttendancesCount)
 
 router.get("/:id", verifyAdminOrStudentorTrainerRole,getAttendances)
