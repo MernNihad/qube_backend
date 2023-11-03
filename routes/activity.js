@@ -19,6 +19,7 @@ router.post("/", verifyAdminOrTrainerRole, createActivity) // to create Activity
 router.post("/answer", verifyAdminOrStudentorTrainerRole,createAnswer) // to create Activity
 router.post("/evaluate", verifyAdminOrStudentRole,evaluationAnswer) // to create Activity
 
+
 router.get("/", verifyAdminOrStudentorTrainerRole, getActivity) // to create Activity
 
 export default router;
