@@ -12,24 +12,24 @@ export const register = async (req, res, next) => {
 
 
 
-    if (!password || !email ) {
+    if (!password || !email) {
         return next(createError(400, 'All fields are required.'));
     }
 
-    
+
 
     // T--------
     if (password?.length < 3 || password?.length > 16) {
         return next(createError(400, 'Invalid password. password must be between 3 and 16 characters.'));
     }
 
-    
+
     // T--------
     if (!validatePassword(password)) {
         return next(createError(400, 'Invalid password. At least one lowercase letter,one uppercase letter,one digit,one special character,'));
     }
-     // T--------
-     if (!validateEmail(email)) {
+    // T--------
+    if (!validateEmail(email)) {
         return next(createError(400, 'Invalid invalid'));
     }
 
@@ -60,18 +60,18 @@ export const login = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    if (!password || !email ) {
+    if (!password || !email) {
         return next(createError(400, 'All fields are required.'));
     }
 
-    
+
 
     // T--------
     if (password?.length < 3 || password?.length > 16) {
         return next(createError(400, 'Invalid password. password must be between 3 and 16 characters.'));
     }
 
-    
+
     // T--------
     if (!validatePassword(password)) {
         return next(createError(400, 'Invalid password. At least one lowercase letter,one uppercase letter,one digit,one special character,'));
@@ -98,3 +98,43 @@ export const login = async (req, res, next) => {
 
     }
 }
+
+
+
+
+// Get Trainer
+export const getAdmin = async (req, res, next) => {
+    const { id } = req.params;
+
+    console.log(req.user);
+    console.log(req.user.id === id);
+
+    try {
+
+
+
+        if (req.user?.isAdmin && req.user?.id === id) {
+            // Check if the user is a trainer and the requested id matches their own
+            const getTrainer = await Admin.findById(id);
+            console.log(getTrainer, '-----');
+            if (!getTrainer) {
+                return next(createError(401, "Not found!"));
+            }
+            // return true
+            // const coursePromises = getTrainer?.courseRef.map(async (item) => {
+            // return await Course.findById(item._id)
+            // })
+
+            // const getTrainerWithCourses = await Promise.all(coursePromises);
+            // getTrainer.courseRef = getTrainerWithCourses
+
+            res.status(200).json(getTrainer);
+
+        } else {
+            return next(createError(401, "You are not authenticated!"));
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
