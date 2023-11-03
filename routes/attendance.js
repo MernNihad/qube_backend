@@ -18,5 +18,4 @@ router.get("/", verifyAdminOrStudentorTrainerRole,getAttendances)
 router.get("/counts", verifyAdminOrStudentorTrainerRole,getAttendancesCount)
 
 router.get("/:id", verifyAdminOrStudentorTrainerRole,getAttendances)
-
 export default router;
