@@ -137,10 +137,15 @@ export const deleteTrainer = async (req, res, next) => {
         const isStudent = await Student.find({ assignedTrainersRef: id });
 
         if (isStudent.length > 0) {
-            res.status(400).json({ message: `Cannot delete trainer. ${isStudent.length} members are assigned to this trainer.`,success:false });
+            res.status(400).json({ message: `Cannot delete trainer. ${isStudent.length} members are assigned to this trainer.`, success: false });
         } else {
-            await Trainer.findByIdAndDelete(id);
-            res.status(400).json({ message: "Trainer has been deleted.",success:false });
+            let isTrainer = await Trainer.findByIdAndDelete(id);
+
+            if (!isTrainer) {
+                res.status(400).json({ message: "Trainer is not found!.", success: false });
+            } else {
+                res.status(400).json({ message: "Trainer has been deleted.", success: false });
+            }
         }
     } catch (error) {
         next(error);
