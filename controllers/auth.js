@@ -60,17 +60,18 @@ export const login = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    if (!password || !email) {
-        return next(createError(400, 'All fields are required.'));
+    if (!email) {
+        return next(createError(400, 'mail required.'));
     }
 
-
+    if (!password) {
+        return next(createError(400, 'password required.'));
+    }
 
     // T--------
-    if (password?.length < 3 || password?.length > 16) {
+    if (password.length < 3 || password.length > 16) {
         return next(createError(400, 'Invalid password. password must be between 3 and 16 characters.'));
     }
-
 
     // T--------
     if (!validatePassword(password)) {

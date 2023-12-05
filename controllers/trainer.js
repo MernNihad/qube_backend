@@ -5,48 +5,84 @@ import Trainer from "../models/Trainer.js";
 import Student from "../models/Student.js";
 import { validateEmail, validateName, validatePassword, validatePhoneNumber } from "../utils/validations.js";
 import Course from "../models/Course.js";
+import Branch from "../models/Branch.js";
 
 
 
 export const createTrainer = async (req, res, next) => {
 
-    const { joinedDate, email, password, phoneNumber, branchRef, name, courseRef, } = req.body;
+    const { joinedDate, email, password, phoneNumber, branchRef, name, courseRef,linkedin,github,profilePic }= req.body;
 
     try {
+
+        if (!(email)) {
+            throw createError(400, 'email required.');
+        }
+
+        if (!(name)) {
+            throw createError(400, 'name required.');
+        }
+
+        if (!(phoneNumber)) {
+            throw createError(400, 'phoneNumber  required.');
+        }
+
+        if (!(password)) {
+            throw createError(400, 'password required.');
+        }
 
         if (!(joinedDate)) {
             throw createError(400, 'joined date required.');
         }
 
-        if (validateEmail(email) && validateName(name) && validatePhoneNumber(phoneNumber) && validatePassword(password)) {
-            if (!(name.length >= 3 && name.length <= 50)) {
-                throw createError(400, 'Name must be between 3 and 50 characters.');
-            }
-
-            if (password.length < 8 || password.length > 50) {
-                throw createError(400, 'Password must be between 8 and 50 characters.');
-            }
-
-            const existingTrainer = await Trainer.findOne({ email });
-            if (existingTrainer) {
-                throw createError(200, 'Email is already in use.');
-            }
-
-            const saltRounds = 10;
-            const salt = bcrypt.genSaltSync(saltRounds);
-            const hash = bcrypt.hashSync(password, salt);
-
-            const newTrainer = new Trainer({ email, password: hash, phoneNumber, branchRef, name, courseRef, joinedDate });
-
-            const savedTrainer = await newTrainer.save();
-
-            const { password: _, ...otherDetails } = savedTrainer?._doc;
-            res.status(200).json(otherDetails);
-        } else {
-            throw createError(400, 'Invalid input. Please check your email, name, and phone number.');
+        if(!validateEmail(email)){
+            throw createError(422,'Invalid Email')
         }
+
+        if(!validateName(name)){
+            throw createError(422,"Invalid Name")
+        }
+
+        if(!validatePhoneNumber(phoneNumber)){
+            throw createError(422,"Invalid Phone Number");
+        }
+
+        if(!validatePassword(password)){
+            throw createError(422,"Invalid password. At least one lowercase letter,one uppercase letter,one digit,one special character,")
+        }
+
+        if(!(name.length >= 3 && name.length <= 50)){
+            throw createError(422,"Name should be between 3 and 50 characters long.")
+        }
+      
+        if(password.length < 8 || password.length > 50){
+            throw createError(422,"Password length must be between 8 to 50 characters.");
+        }
+
+        const existingTrainer = await Trainer.findOne({ email });
+
+        if (existingTrainer) {
+            throw createError(409, "User already exists with this email address.");
+        }
+
+        const saltRounds = 10;
+
+        const salt = bcrypt.genSaltSync(saltRounds);
+        
+        const hash = bcrypt.hashSync(password, salt);
+
+        const newTrainer = new Trainer({ email, password: hash, phoneNumber, branchRef, name, courseRef, joinedDate,github,linkedin,profilePic });
+
+        const savedTrainer = await newTrainer.save();
+
+        const { password: _, ...otherDetails } = savedTrainer?._doc;
+
+        res.status(200).json(otherDetails);
+
     } catch (error) {
+
         next(error);
+
     }
 
 }
@@ -134,17 +170,22 @@ export const updateTrainer = async (req, res, next) => {
 export const deleteTrainer = async (req, res, next) => {
     try {
         const { id } = req.params;
+
+        if(!(req.params.id)){
+            throw createError(400,"No ID provided");
+        }
+
         const isStudent = await Student.find({ assignedTrainersRef: id });
 
         if (isStudent.length > 0) {
-            res.status(400).json({ message: `Cannot delete trainer. ${isStudent.length} members are assigned to this trainer.`, success: false });
+            throw createError(409, "This trainer cannot be deleted because there are students associated with it.");
         } else {
             let isTrainer = await Trainer.findByIdAndDelete(id);
 
             if (!isTrainer) {
                 res.status(400).json({ message: "Trainer is not found!.", success: false });
             } else {
-                res.status(400).json({ message: "Trainer has been deleted.", success: false });
+                res.status(200).json({ message: "Trainer has been deleted.", success: false });
             }
         }
     } catch (error) {
@@ -186,16 +227,42 @@ export const getTrainer = async (req, res, next) => {
 export const getTrainers = async (req, res, next) => {
     try {
 
-        const page = parseInt(req.query?.page) || 1; // Get the page number from the query parameters, default to page 1
-        const perPage = 100; // Number of documents to retrieve per page
+        // const page = parseInt(req.query?.page) || 1; // Get the page number from the query parameters, default to page 1
+        // const perPage = 100; // Number of documents to retrieve per page
 
         // Calculate the number of documents to skip based on the page number and perPage
-        const skip = (page - 1) * perPage;
+        // const skip = (page - 1) * perPage;
 
 
         const trainers = await Trainer.find()
+
+        if(trainers.length > 0){
+
+            let result = await Promise.all(trainers.map(async(trainer)=>{
+
+                const branch = await Branch.findById(trainer.branchRef)
+                const courses = await Course.find({ _id: { $in: trainer.courseRef } });
+
+
+                if(branch && courses.length > 0){
+
+                    return {...trainer._doc,branchName:branch.name,courses:courses}
+                }else{
+                    return {...trainer._doc}
+                }
+
+        
+            }))
+
+
+
+
+            res.status(200).json(result);
+
+        }else{
+            throw createError(404,"No Trainers Found")
+        }
         // .skip(skip).limit(perPage);
-        res.status(200).json(trainers);
 
     } catch (error) {
         next(error);

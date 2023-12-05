@@ -109,6 +109,10 @@ export const deleteCourse = async (req, res, next) => {
             return next(createError(404, 'Course not found.'));
         }
 
+        if(!getCourse.subCourses){
+            return next(createError(404, 'Sub courses not found.'));
+        }
+
         const subCourses = getCourse.subCourses || []; // Ensure subCourses is an array or initialize as an empty array if undefined
 
         const counts = await Promise.all(subCourses.map(async (item) => {
@@ -118,16 +122,21 @@ export const deleteCourse = async (req, res, next) => {
 
         const totalCount = counts.reduce((acc, count) => acc + count, 0);
 
-        console.log(totalCount)
-
         if (totalCount === 0) {
             try {
 
                 const Trainers = await Trainer.find({ courseRef: id })
 
-                await Course.findByIdAndDelete(id);
-                res.status(200).json({ message: "Course has been deleted." ,success:true});
+                if(Trainers.length > 0  ) {
+                    return next(createError(404, 'Trainers avabile in this course.'));
+                }
+                if(Trainers.length === 0 ){
+                    await Course.findByIdAndDelete(id);
+                    res.status(200).json({ message: "Course has been deleted." ,success:true});
+                }
+
             } catch (error) {
+                
                 next(error)
 
             }
@@ -137,6 +146,7 @@ export const deleteCourse = async (req, res, next) => {
 
     } catch (error) {
 
+        next(error)
     }
 
 
@@ -148,15 +158,20 @@ export const deleteCourse = async (req, res, next) => {
 // Get Course
 export const getCourse = async (req, res, next) => {
 
-    const { id } = req?.params
+    const { id } = req.params
 
     try {
 
-        const getCourse = await Course.findById(id);
+        let getCourse = null;
 
-        if(getCourse?.subCourses?.length >0){
+        if(req.params.id) {
+            getCourse = await Course.findById(id);
+        }
 
-            const isSubcoursesList = await Promise.all(getCourse?.subCourses?.map(async (item) => {
+
+        if(getCourse.subCourses.length >0){
+
+            const isSubcoursesList = await Promise.all(getCourse.subCourses.map(async (item) => {
                 return await Course.findById(item)
             }))
             getCourse.subCourses = isSubcoursesList
@@ -192,10 +207,15 @@ export const getCourses = async (req, res, next) => {
 
         // Query the database with skip and limit options
         const Courses = await Course.find({ isMainCourse })
+
+        if(Courses.length > 0){
+            res.status(200).json({result:Courses,success:true});
+        }else{
+            res.status(404).json({message:"No courses found"})
+        }
         // .skip(skip).limit(perPage);
         
 
-        res.status(200).json({result:Courses,success:true});
 
     } catch (error) {
 

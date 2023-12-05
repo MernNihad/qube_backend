@@ -36,6 +36,15 @@ const TrainerSchema = new Schema({
     },
     joinedDate: {
         type: Date,
+    },
+    linkedin:{
+        type:String
+    },
+    github:{
+        type:String
+    },
+    profilePic:{
+        type:String
     }
 }, { timestamps: true });
 
